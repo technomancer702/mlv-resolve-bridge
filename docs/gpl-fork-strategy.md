@@ -16,6 +16,13 @@ mlv-resolve-bridge/
     MLV-App/              # git submodule pointing at our MLV-App fork
 ```
 
+This layout is now active. The submodule points at:
+
+```text
+https://github.com/technomancer702/MLV-App.git
+branch: mlv-resolve-headless-export
+```
+
 Why submodule/fork over copy-paste:
 
 - We can pull upstream MLV-App fixes.

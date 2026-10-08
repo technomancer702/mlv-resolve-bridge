@@ -33,6 +33,7 @@ Use CinemaDNG folders as the first export target. They are large, but they prese
 - `docs/gpl-fork-strategy.md` - recommended fork/source dependency strategy.
 - `docs/mlvapp-recon.md` - notes from inspecting MLV-App internals.
 - `resolve_scripts/import_media.py` - standalone Resolve Python importer.
+- `third_party/MLV-App` - MLV-App fork pinned to the `mlv-resolve-headless-export` branch.
 - `workflow_plugin/com.codex.mlvappresolvebridge/` - Resolve Workflow Integration plugin scaffold.
 
 ## Current Status
@@ -45,14 +46,20 @@ The recommended path is to maintain an MLV-App fork as a source dependency and a
 
 ## MLV-App Fork Patch
 
-Apply the patch to your MLV-App fork:
+This repo tracks the MLV-App fork as a submodule:
 
 ```powershell
-git clone https://github.com/ilia3101/MLV-App.git third_party\MLV-App
-git -C third_party\MLV-App apply ..\..\patches\mlvapp-headless-export.patch
+git submodule update --init --recursive
 ```
 
-After you create a GitHub fork of MLV-App, change `origin` in `third_party\MLV-App` to your fork URL and push a branch for this work.
+The submodule points at:
+
+```text
+https://github.com/technomancer702/MLV-App.git
+branch: mlv-resolve-headless-export
+```
+
+`patches/mlvapp-headless-export.patch` is kept as a portable patch artifact for review or re-application against upstream.
 
 The patch adds this initial command shape:
 

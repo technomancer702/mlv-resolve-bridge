@@ -1,0 +1,4 @@
+[submodule "third_party/MLV-App"]
+	path = third_party/MLV-App
+	url = https://github.com/technomancer702/MLV-App.git
+	branch = mlv-resolve-headless-export
