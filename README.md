@@ -195,7 +195,7 @@ The free Resolve build can use the normal Scripts menu path when local scripting
 Restart Resolve after installing or updating the script. Open:
 
 ```text
-Workspace > Scripts > Utility > MLV App Resolve Bridge
+Workspace > Scripts > Edit > MLV App Resolve Bridge
 ```
 
 Use **Add MLV Clips...**, select one or more `.MLV` files, then click **Export and Import**. The script uses the same local smoke config by default:
