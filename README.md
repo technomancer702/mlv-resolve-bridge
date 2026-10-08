@@ -192,7 +192,7 @@ The free Resolve build can use the normal Scripts menu path when local scripting
 .\scripts\install-resolve-script.ps1
 ```
 
-Restart Resolve after installing or updating the script. Open:
+The installer copies the script to both the user scripts folder and the all-users `%PROGRAMDATA%\Blackmagic Design\DaVinci Resolve\Fusion\Scripts\Edit` folder, because Resolve builds differ in which location they enumerate. Restart Resolve after installing or updating the script. Open:
 
 ```text
 Workspace > Scripts > Edit > MLV App Resolve Bridge
