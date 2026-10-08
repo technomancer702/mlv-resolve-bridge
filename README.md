@@ -192,13 +192,13 @@ The free Resolve build can use the normal Scripts menu path when local scripting
 .\scripts\install-resolve-script.ps1
 ```
 
-The installer copies the script to both the user scripts folder and the all-users `%PROGRAMDATA%\Blackmagic Design\DaVinci Resolve\Fusion\Scripts\Edit` folder, because Resolve builds differ in which location they enumerate. Restart Resolve after installing or updating the script. Open:
+The installer copies both a Python script and a Lua launcher to the user scripts folder and the all-users `%PROGRAMDATA%\Blackmagic Design\DaVinci Resolve\Fusion\Scripts\Edit` folder, because Resolve builds differ in which location and language they enumerate. Restart Resolve after installing or updating the script. Open:
 
 ```text
-Workspace > Scripts > Edit > MLV App Resolve Bridge
+Workspace > Scripts > Edit > MLVAppResolveBridge
 ```
 
-Use **Add MLV Clips...**, select one or more `.MLV` files, then click **Export and Import**. The script uses the same local smoke config by default:
+The Lua menu entry opens a file picker, exports the selected `.MLV`, and imports the returned DNG sequence into the current Media Pool. The Python UI script, when visible as `MLV App Resolve Bridge`, provides the same flow with a small window. Both use the same local smoke config by default:
 
 ```text
 F:\Coding Projects\mlvapp-resolve-bridge\bridge\config.local-smoke.example.json

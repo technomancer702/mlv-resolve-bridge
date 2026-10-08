@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -60,6 +61,43 @@ def write_text_log(path: Path, value: str) -> str | None:
         return None
     path.write_text(value, encoding="utf-8", errors="replace")
     return str(path.resolve())
+
+
+def resolve_import_info(asset: Path) -> tuple[str, str, int | None, int | None]:
+    if asset.suffix.lower() != ".dng" and not asset.is_dir():
+        return ("file", str(asset.resolve()), None, None)
+
+    directory = asset if asset.is_dir() else asset.parent
+    groups: dict[tuple[str, int, str], list[int]] = {}
+    for candidate in directory.iterdir() if directory.exists() else []:
+        match = re.match(r"^(.*?)(\d+)(\.[dD][nN][gG])$", candidate.name)
+        if not match:
+            continue
+        key = (match.group(1), len(match.group(2)), match.group(3))
+        groups.setdefault(key, []).append(int(match.group(2)))
+
+    if not groups:
+        return ("file", str(asset.resolve()), None, None)
+
+    (prefix, width, extension), frames = max(groups.items(), key=lambda item: len(item[1]))
+    pattern = str((directory / f"{prefix}%0{width}d{extension}").resolve())
+    return ("sequence", pattern, min(frames), max(frames))
+
+
+def print_resolve_import_list(results: list[dict[str, Any]]) -> None:
+    for result in results:
+        for asset in result.get("assets", []):
+            kind, path, start, end = resolve_import_info(Path(asset))
+            print(
+                "\t".join(
+                    [
+                        kind,
+                        path,
+                        "" if start is None else str(start),
+                        "" if end is None else str(end),
+                    ]
+                )
+            )
 
 
 def export_clip(
@@ -124,6 +162,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--config", type=Path, help="Bridge config JSON.")
     parser.add_argument("--output-root", type=Path, help="Export cache root.")
     parser.add_argument("--dry-run", action="store_true", help="Print commands without running them.")
+    parser.add_argument(
+        "--resolve-import-list",
+        action="store_true",
+        help="Print tab-separated Resolve import entries instead of JSON.",
+    )
     return parser.parse_args(argv)
 
 
@@ -156,7 +199,10 @@ def main(argv: list[str]) -> int:
         except Exception as exc:
             results.append({"input": str(clip), "error": str(exc), "assets": []})
 
-    print(json.dumps({"results": results}, indent=2))
+    if args.resolve_import_list:
+        print_resolve_import_list(results)
+    else:
+        print(json.dumps({"results": results}, indent=2))
     failed = [
         item
         for item in results
