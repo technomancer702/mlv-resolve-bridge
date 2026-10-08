@@ -140,6 +140,8 @@ The bridge prints JSON describing exported paths. The Workflow Integration panel
 
 ## Resolve Plugin Install
 
+Workflow Integration plugins require DaVinci Resolve Studio. If you are using the free Resolve build, skip to **Resolve Free Script Install** below.
+
 Install the workflow plugin:
 
 ```powershell
@@ -177,6 +179,32 @@ F:\Coding Projects\mlvapp-resolve-bridge\bridge\config.local-smoke.example.json
 ```
 
 That smoke config exports 12 DNG frames so the included incomplete sample clip can be imported into Resolve. For full clips with all spanned `.M00`, `.M01`, etc. files present, switch `Config JSON` to:
+
+```text
+F:\Coding Projects\mlvapp-resolve-bridge\bridge\config.local-build.example.json
+```
+
+## Resolve Free Script Install
+
+The free Resolve build can use the normal Scripts menu path when local scripting is available. Install the fallback script:
+
+```powershell
+.\scripts\install-resolve-script.ps1
+```
+
+Restart Resolve after installing or updating the script. Open:
+
+```text
+Workspace > Scripts > Utility > MLV App Resolve Bridge
+```
+
+Use **Add MLV Clips...**, select one or more `.MLV` files, then click **Export and Import**. The script uses the same local smoke config by default:
+
+```text
+F:\Coding Projects\mlvapp-resolve-bridge\bridge\config.local-smoke.example.json
+```
+
+For complete clips with all spanned files present, switch the `Config` field to:
 
 ```text
 F:\Coding Projects\mlvapp-resolve-bridge\bridge\config.local-build.example.json
