@@ -1,5 +1,18 @@
+diff --git a/platform/qt/MLVApp.pro b/platform/qt/MLVApp.pro
+index 49065108..16bff4ef 100644
+--- a/platform/qt/MLVApp.pro
++++ b/platform/qt/MLVApp.pro
+@@ -102,7 +102,7 @@ macx{
+ # Else comment these lines!
+ win32{
+     QMAKE_CFLAGS += -O2 -fopenmp -mssse3 -msse3 -msse2 -msse -D_FILE_OFFSET_BITS=64 -std=c99 -ftree-vectorize
+-    LIBS += -llibgomp-1
++    LIBS += -lgomp
+     greaterThan(QT_MAJOR_VERSION, 5){
+         QMAKE_CXXFLAGS += -fopenmp -mssse3 -std=c++17 -ftree-vectorize
+     }
 diff --git a/platform/qt/MainWindow.cpp b/platform/qt/MainWindow.cpp
-index 6e26312..83679ef 100755
+index 6e263126..10abd082 100755
 --- a/platform/qt/MainWindow.cpp
 +++ b/platform/qt/MainWindow.cpp
 @@ -27,6 +27,7 @@
@@ -10,19 +23,20 @@ index 6e26312..83679ef 100755
  #include <unistd.h>
  #include <math.h>
  #include <sys/stat.h>
-@@ -125,6 +126,8 @@ MainWindow::MainWindow(int &argc, char **argv, QWidget *parent) :
+@@ -125,6 +126,9 @@ MainWindow::MainWindow(int &argc, char **argv, QWidget *parent) :
      m_tryToSyncAudio = false;
      m_playbackStopped = false;
      m_inClipDeleteProcess = false;
 +    m_headlessExport = false;
++    m_headlessMaxFrames = 0;
 +    m_headlessAudioEnabled = true;
- 
+
  #ifdef STDOUT_SILENT
      //QtNetwork: shut up please!
-@@ -162,6 +165,42 @@ MainWindow::MainWindow(int &argc, char **argv, QWidget *parent) :
+@@ -162,6 +166,48 @@ MainWindow::MainWindow(int &argc, char **argv, QWidget *parent) :
      //Connect Export Handler
      connect( this, SIGNAL(exportReady()), this, SLOT(exportHandler()) );
- 
+
 +    for( int i = 1; i < argc; i++ )
 +    {
 +        QString arg = QString::fromLocal8Bit( argv[i] );
@@ -51,6 +65,12 @@ index 6e26312..83679ef 100755
 +            QString audio = QString::fromLocal8Bit( argv[++i] ).toLower();
 +            m_headlessAudioEnabled = !( audio == "off" || audio == "false" || audio == "0" );
 +        }
++        else if( arg == "--max-frames" && i + 1 < argc )
++        {
++            bool ok = false;
++            int maxFrames = QString::fromLocal8Bit( argv[++i] ).toInt( &ok );
++            if( ok && maxFrames > 0 ) m_headlessMaxFrames = maxFrames;
++        }
 +    }
 +
 +    if( m_headlessExport )
@@ -62,10 +82,10 @@ index 6e26312..83679ef 100755
      //"Open with" for Windows or scripts
      if( argc > 1 )
      {
-@@ -216,6 +255,11 @@ MainWindow::MainWindow(int &argc, char **argv, QWidget *parent) :
+@@ -216,6 +262,11 @@ MainWindow::MainWindow(int &argc, char **argv, QWidget *parent) :
      ui->comboBoxTonemapFct->setVisible( false );
  }
- 
+
 +bool MainWindow::isHeadlessExport( void ) const
 +{
 +    return m_headlessExport;
@@ -74,7 +94,7 @@ index 6e26312..83679ef 100755
  //Destructor
  MainWindow::~MainWindow()
  {
-@@ -2788,7 +2832,7 @@ void MainWindow::startExportCdng(QString fileName)
+@@ -2788,7 +2839,7 @@ void MainWindow::startExportCdng(QString fileName)
      //StatusDialog
      m_pStatusDialog->ui->progressBar->setMaximum( m_exportQueue.first()->cutOut() - m_exportQueue.first()->cutIn() + 1 );
      m_pStatusDialog->ui->progressBar->setValue( 0 );
@@ -83,7 +103,7 @@ index 6e26312..83679ef 100755
      //Frames in the export queue?!
      int totalFrames = 0;
      for( int i = 0; i < m_exportQueue.size(); i++ )
-@@ -2922,8 +2966,14 @@ void MainWindow::startExportCdng(QString fileName)
+@@ -2922,8 +2973,14 @@ void MainWindow::startExportCdng(QString fileName)
          if( saveDngFrame( m_pMlvObject, cinemaDng, frame, filePathNr.toLatin1().data(), properties_fn.toLatin1().data() ) )
  #endif
          {
@@ -99,7 +119,16 @@ index 6e26312..83679ef 100755
              int ret = QMessageBox::critical( this,
                                               tr( "MLV App - Export file error" ),
                                               tr( "Could not save: %1\nHow do you like to proceed?" ).arg( dngName ),
-@@ -8610,7 +8660,14 @@ void MainWindow::exportHandler( void )
+@@ -5189,7 +5246,7 @@ int MainWindow::showFileInEditor(int row)
+     if( ui->actionCaching->isChecked() ) on_actionCaching_triggered();
+
+     //Focus Pixel Check
+-    focusPixelCheckAndInstallation();
++    if( !m_headlessExport ) focusPixelCheckAndInstallation();
+
+     //Autoresize columns
+     ui->tableViewSession->horizontalHeader()->setSectionResizeMode( QHeaderView::ResizeToContents );
+@@ -8610,7 +8667,14 @@ void MainWindow::exportHandler( void )
      else
      {
          //Hide Status Dialog
@@ -115,10 +144,10 @@ index 6e26312..83679ef 100755
          //Open last file which was opened before export
          openMlv( GET_RECEIPT( m_lastClipBeforeExport )->fileName() );
          setSliders( GET_RECEIPT( m_lastClipBeforeExport ), false );
-@@ -8635,6 +8692,77 @@ void MainWindow::exportHandler( void )
+@@ -8635,6 +8699,86 @@ void MainWindow::exportHandler( void )
      }
  }
- 
+
 +void MainWindow::runHeadlessExport( void )
 +{
 +    if( m_headlessInputFileName.isEmpty() || m_headlessOutputDir.isEmpty() )
@@ -175,6 +204,15 @@ index 6e26312..83679ef 100755
 +        return;
 +    }
 +
++    if( m_headlessMaxFrames > 0 )
++    {
++        ReceiptSettings *receipt = GET_RECEIPT( SESSION_ACTIVE_CLIP_ROW );
++        uint32_t cutIn = receipt->cutIn();
++        uint32_t cutOut = receipt->cutOut();
++        uint32_t requestedCutOut = cutIn + (uint32_t)m_headlessMaxFrames - 1;
++        receipt->setCutOut( requestedCutOut < cutOut ? requestedCutOut : cutOut );
++    }
++
 +    m_lastClipBeforeExport = SESSION_ACTIVE_CLIP_ROW;
 +    QString exportFileName = outputDir.absoluteFilePath( inputInfo.completeBaseName() + ".dng" );
 +    addClipToExportQueue( SESSION_ACTIVE_CLIP_ROW, exportFileName );
@@ -194,7 +232,7 @@ index 6e26312..83679ef 100755
  void MainWindow::on_actionPlay_triggered(bool checked)
  {
 diff --git a/platform/qt/MainWindow.h b/platform/qt/MainWindow.h
-index d0e012a..cd1367a 100644
+index d0e012ab..08dcd628 100644
 --- a/platform/qt/MainWindow.h
 +++ b/platform/qt/MainWindow.h
 @@ -51,6 +51,7 @@ class MainWindow : public QMainWindow
@@ -202,18 +240,18 @@ index d0e012a..cd1367a 100644
      explicit MainWindow(int &argc, char **argv, QWidget *parent = 0);
      ~MainWindow();
 +    bool isHeadlessExport( void ) const;
- 
+
  protected:
      void timerEvent( QTimerEvent *t );
 @@ -66,6 +67,7 @@ signals:
- 
+
  private slots:
      void openMlvSet( QStringList list );
 +    void runHeadlessExport( void );
      void timerFrameEvent( void );
      void on_actionOpen_triggered();
      void on_actionTranscodeAndImport_triggered();
-@@ -479,6 +481,12 @@ private:
+@@ -479,6 +481,13 @@ private:
      bool m_zoomModeChanged;
      bool m_playbackStopped;
      bool m_inClipDeleteProcess;
@@ -222,12 +260,13 @@ index d0e012a..cd1367a 100644
 +    QString m_headlessOutputDir;
 +    QString m_headlessCodec;
 +    QString m_headlessCdngNaming;
++    int m_headlessMaxFrames;
 +    bool m_headlessAudioEnabled;
      QString m_lastExportPath;
      QString m_lastSessionFileName;
      QString m_lastMlvOpenFileName;
 diff --git a/platform/qt/main.cpp b/platform/qt/main.cpp
-index a851e19..78e83df 100644
+index a851e19a..78e83dfc 100644
 --- a/platform/qt/main.cpp
 +++ b/platform/qt/main.cpp
 @@ -16,7 +16,7 @@ int main(int argc, char *argv[])
@@ -236,6 +275,6 @@ index a851e19..78e83df 100644
      MainWindow w(argc, argv);
 -    w.show();
 +    if( !w.isHeadlessExport() ) w.show();
- 
+
      return a.exec();
  }

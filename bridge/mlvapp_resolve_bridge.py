@@ -15,6 +15,7 @@ from typing import Any
 
 
 DEFAULT_ASSET_EXTENSIONS = {".mov", ".mxf", ".avi", ".dng", ".wav"}
+LOG_TAIL_CHARS = 1200
 
 
 def load_config(path: Path | None) -> dict[str, Any]:
@@ -48,6 +49,19 @@ def discover_assets(output_dir: Path, extensions: set[str]) -> list[Path]:
     return [*dng_parents, *non_dng_assets]
 
 
+def tail_text(value: str, max_chars: int = LOG_TAIL_CHARS) -> str:
+    if len(value) <= max_chars:
+        return value
+    return value[-max_chars:]
+
+
+def write_text_log(path: Path, value: str) -> str | None:
+    if not value:
+        return None
+    path.write_text(value, encoding="utf-8", errors="replace")
+    return str(path.resolve())
+
+
 def export_clip(
     clip_path: Path,
     output_root: Path,
@@ -67,6 +81,7 @@ def export_clip(
         "input": str(clip_path.resolve()),
         "output_dir": str(output_dir.resolve()),
         "output_file": str(output_file.resolve()),
+        "repo_root": str(Path(__file__).resolve().parents[1]),
         "stem": clip_path.stem,
     }
     command = expand_command(command_template, values)
@@ -78,7 +93,8 @@ def export_clip(
         "dry_run": dry_run,
         "returncode": None,
         "assets": [],
-        "stderr": "",
+        "stdout_tail": "",
+        "stderr_tail": "",
     }
 
     if dry_run:
@@ -87,11 +103,10 @@ def export_clip(
     output_dir.mkdir(parents=True, exist_ok=True)
     completed = subprocess.run(command, text=True, capture_output=True, check=False)
     result["returncode"] = completed.returncode
-    result["stdout"] = completed.stdout
-    result["stderr"] = completed.stderr
-
-    if completed.returncode != 0:
-        return result
+    result["stdout_tail"] = tail_text(completed.stdout)
+    result["stderr_tail"] = tail_text(completed.stderr)
+    result["stdout_log"] = write_text_log(output_dir / "mlvapp.stdout.log", completed.stdout)
+    result["stderr_log"] = write_text_log(output_dir / "mlvapp.stderr.log", completed.stderr)
 
     assets = discover_assets(output_dir, asset_extensions)
     result["assets"] = [str(path.resolve()) for path in assets]

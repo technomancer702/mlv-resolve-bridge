@@ -1,0 +1,24 @@
+{
+  "output_root": ".build/smoke-exports",
+  "asset_extensions": [".dng", ".wav"],
+  "export_command": [
+    "powershell",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "{repo_root}/scripts/run-mlvapp-headless.ps1",
+    "-Input",
+    "{input}",
+    "-OutputDir",
+    "{output_dir}",
+    "-Codec",
+    "cdng-fast",
+    "-CdngNaming",
+    "resolve",
+    "-Audio",
+    "off",
+    "-MaxFrames",
+    "12"
+  ]
+}

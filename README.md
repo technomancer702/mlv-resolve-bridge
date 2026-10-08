@@ -29,7 +29,9 @@ Use CinemaDNG folders as the first export target. They are large, but they prese
 
 - `bridge/mlvapp_resolve_bridge.py` - command-line bridge/orchestrator.
 - `bridge/config.example.json` - configurable export command template.
-- `bridge/config.mlvapp-headless.example.json` - target config for the planned MLV-App headless exporter.
+- `bridge/config.local-build.example.json` - local patched MLV-App export config.
+- `bridge/config.local-smoke.example.json` - local smoke-test config that exports a bounded DNG sequence.
+- `bridge/config.mlvapp-headless.example.json` - generic config for the MLV-App headless exporter.
 - `docs/gpl-fork-strategy.md` - recommended fork/source dependency strategy.
 - `docs/mlvapp-recon.md` - notes from inspecting MLV-App internals.
 - `resolve_scripts/import_media.py` - standalone Resolve Python importer.
@@ -38,11 +40,14 @@ Use CinemaDNG folders as the first export target. They are large, but they prese
 
 ## Current Status
 
-This is a scaffold. The MLV-App source has been inspected locally, and the current Qt app opens clips from command-line arguments but does not expose a ready-made headless export command. See `docs/mlvapp-recon.md` for the relevant MLV-App functions and likely patch path.
+The bridge now has a working local headless export path:
 
-`patches/mlvapp-headless-export.patch` adds the first narrow headless exporter prototype to MLV-App. The Python bridge already supports a command-template adapter, so once a patched MLV-App binary is available, the Resolve ingest loop can stay stable.
+- the MLV-App fork builds on Windows with Qt 6.5.3/MinGW,
+- `scripts/run-mlvapp-headless.ps1` launches the patched binary with the right runtime DLL order,
+- `bridge/mlvapp_resolve_bridge.py` exports clips through the command-template adapter,
+- and the bridge discovers the exported CinemaDNG sequence folder for Resolve import.
 
-The recommended path is to maintain an MLV-App fork as a source dependency and add a narrow headless export mode there. See `docs/gpl-fork-strategy.md`.
+The sample clip in this checkout is missing its spanned `M06-1927.M00` continuation file, so a full export correctly fails near the end of the available `.MLV` data. Use `bridge/config.local-smoke.example.json` for repeatable local validation; it exports the first 12 frames and succeeds against the available sample file.
 
 ## MLV-App Fork Patch
 
@@ -69,7 +74,8 @@ mlvapp --headless-export `
   --output-dir D:\MLVBridgeCache\A001 `
   --codec cdng-fast `
   --cdng-naming resolve `
-  --audio on
+  --audio on `
+  --max-frames 12
 ```
 
 Supported codecs in the first patch:
@@ -77,6 +83,43 @@ Supported codecs in the first patch:
 - `cdng`
 - `cdng-lossless`
 - `cdng-fast`
+
+`--max-frames` is optional. It is mainly useful for smoke tests and short proxy exports; omit it for full-clip export.
+
+## Local Build
+
+Install Qt into the workspace:
+
+```powershell
+python -m pip install --user aqtinstall
+python -m aqt install-qt windows desktop 6.5.3 win64_mingw -O .qt -m qtmultimedia qt5compat
+```
+
+Build the patched MLV-App:
+
+```powershell
+.\scripts\build-mlvapp.ps1
+```
+
+Run a headless export:
+
+```powershell
+.\scripts\run-mlvapp-headless.ps1 -Input C:\clips\A001.MLV -OutputDir D:\MLVBridgeCache\A001
+```
+
+Use the local build from the bridge:
+
+```powershell
+python bridge\mlvapp_resolve_bridge.py --config bridge\config.local-build.example.json C:\clips\A001.MLV
+```
+
+Run the smoke config against a sample clip:
+
+```powershell
+python bridge\mlvapp_resolve_bridge.py --config bridge\config.local-smoke.example.json "sample mlv footage\M06-1927.MLV"
+```
+
+The smoke run should return `returncode: 0`, one exported DNG-sequence folder in `assets`, and 12 `.dng` files under `.build\smoke-exports`.
 
 ## Local CLI Smoke Test
 

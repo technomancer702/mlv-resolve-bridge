@@ -1,6 +1,10 @@
 .external/
+.qt/
+.build/
 __pycache__/
 *.py[cod]
 bridge/config.local.json
 exports/
 *.log
+sample mlv footage/
+aqtinstall.log
