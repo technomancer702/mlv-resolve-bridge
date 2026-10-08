@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <id>com.codex.mlvappresolvebridge</id>
+  <name>MLV-App Resolve Bridge</name>
+  <version>0.1.0</version>
+  <description>Export Magic Lantern MLV clips and import the results into the Resolve Media Pool.</description>
+</manifest>

@@ -1,0 +1,130 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, Segoe UI, system-ui, sans-serif;
+  background: #151719;
+  color: #f4f1ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.drop-zone {
+  display: grid;
+  min-height: 190px;
+  place-items: center;
+  border: 2px dashed #6fa6a1;
+  border-radius: 8px;
+  background: #202326;
+  text-align: center;
+}
+
+.drop-zone.active {
+  border-color: #f3c969;
+  background: #273033;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 680;
+}
+
+h2 {
+  font-size: 14px;
+  font-weight: 680;
+  color: #cfc7b5;
+}
+
+p {
+  margin-top: 8px;
+  color: #c8d1cf;
+}
+
+.settings {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #cfc7b5;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #3e484b;
+  border-radius: 6px;
+  background: #101214;
+  color: #f4f1ea;
+  padding: 10px 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #6fa6a1;
+  color: #07100f;
+  cursor: pointer;
+  font-weight: 750;
+  padding: 10px 14px;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.queue {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.queue li {
+  overflow: hidden;
+  border: 1px solid #2f3638;
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log {
+  min-height: 120px;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid #2f3638;
+  border-radius: 6px;
+  margin: 8px 0 0;
+  padding: 10px;
+  background: #101214;
+  color: #d6dbd6;
+  white-space: pre-wrap;
+}

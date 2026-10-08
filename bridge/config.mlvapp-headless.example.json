@@ -1,0 +1,18 @@
+{
+  "output_root": "F:/MLV Resolve Bridge Exports",
+  "asset_extensions": [".dng", ".wav"],
+  "export_command": [
+    "mlvapp",
+    "--headless-export",
+    "--input",
+    "{input}",
+    "--output-dir",
+    "{output_dir}",
+    "--codec",
+    "cdng-fast",
+    "--cdng-naming",
+    "resolve",
+    "--audio",
+    "on"
+  ]
+}

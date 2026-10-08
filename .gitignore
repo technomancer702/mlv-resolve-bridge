@@ -1,0 +1,6 @@
+.external/
+__pycache__/
+*.py[cod]
+bridge/config.local.json
+exports/
+*.log
