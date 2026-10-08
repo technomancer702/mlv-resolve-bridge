@@ -140,7 +140,13 @@ The bridge prints JSON describing exported paths. The Workflow Integration panel
 
 ## Resolve Plugin Install
 
-Copy `workflow_plugin/com.codex.mlvappresolvebridge` into Resolve's Workflow Integration Plugins directory.
+Install the workflow plugin:
+
+```powershell
+.\scripts\install-resolve-plugin.ps1
+```
+
+The script copies `workflow_plugin/com.codex.mlvappresolvebridge` into Resolve's Workflow Integration Plugins directory and adds the version-matched `WorkflowIntegration.node` from Resolve's Developer examples.
 
 Windows:
 
@@ -154,12 +160,26 @@ macOS:
 /Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/
 ```
 
-Then copy the current `WorkflowIntegration.node` from Resolve's Developer examples into the plugin folder. Resolve's docs say that native module lives beside its sample plugin, and it should match the installed Resolve version.
+Restart Resolve after installing or updating the plugin. Open:
 
-When the panel opens, set `Bridge repo root` to this checkout:
+```text
+Workspace > Workflow Integrations > MLV-App Resolve Bridge
+```
+
+The panel defaults to this checkout and the local smoke config:
 
 ```text
 F:\Coding Projects\mlvapp-resolve-bridge
+```
+
+```text
+F:\Coding Projects\mlvapp-resolve-bridge\bridge\config.local-smoke.example.json
+```
+
+That smoke config exports 12 DNG frames so the included incomplete sample clip can be imported into Resolve. For full clips with all spanned `.M00`, `.M01`, etc. files present, switch `Config JSON` to:
+
+```text
+F:\Coding Projects\mlvapp-resolve-bridge\bridge\config.local-build.example.json
 ```
 
 ## Notes

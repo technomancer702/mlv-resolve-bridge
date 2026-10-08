@@ -1,0 +1,9 @@
+{
+  "name": "MLV-App Resolve Bridge",
+  "version": "0.1.0",
+  "description": "Export Magic Lantern MLV clips and import the results into the Resolve Media Pool.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  }
+}

@@ -1,6 +1,7 @@
 const dropZone = document.getElementById("dropZone");
 const queue = document.getElementById("queue");
 const log = document.getElementById("log");
+const browseButton = document.getElementById("browseButton");
 const runButton = document.getElementById("runButton");
 const clearButton = document.getElementById("clearButton");
 const pythonInput = document.getElementById("pythonInput");
@@ -25,12 +26,21 @@ function renderQueue() {
   clearButton.disabled = files.length === 0;
 }
 
-function addFiles(fileList) {
-  const next = Array.from(fileList)
-    .map((file) => file.path)
-    .filter((filePath) => filePath && filePath.toLowerCase().endsWith(".mlv"));
+function addPaths(paths) {
+  const next = paths.filter((filePath) => filePath && filePath.toLowerCase().endsWith(".mlv"));
   files = Array.from(new Set([...files, ...next]));
   renderQueue();
+}
+
+function addFiles(fileList) {
+  addPaths(Array.from(fileList).map((file) => file.path));
+}
+
+async function loadDefaults() {
+  const defaults = await window.mlvBridge.defaults();
+  pythonInput.value = defaults.python || "python";
+  repoRootInput.value = defaults.repoRoot || "";
+  configInput.value = defaults.config || "";
 }
 
 dropZone.addEventListener("dragover", (event) => {
@@ -46,6 +56,14 @@ dropZone.addEventListener("drop", (event) => {
   event.preventDefault();
   dropZone.classList.remove("active");
   addFiles(event.dataTransfer.files);
+});
+
+browseButton.addEventListener("click", async () => {
+  try {
+    addPaths(await window.mlvBridge.selectMlvFiles());
+  } catch (error) {
+    writeLog(error.stack || error.message);
+  }
 });
 
 clearButton.addEventListener("click", () => {
@@ -71,6 +89,9 @@ runButton.addEventListener("click", async () => {
     if (result.stderr) {
       writeLog(result.stderr);
     }
+    if (result.code !== 0) {
+      writeLog(`Bridge exited with code ${result.code}.`);
+    }
 
     const assets = result.payload.results.flatMap((item) => item.assets || []);
     if (assets.length === 0) {
@@ -79,7 +100,11 @@ runButton.addEventListener("click", async () => {
     }
 
     writeLog(`Importing ${assets.length} exported path(s) into Resolve...`);
-    const imported = window.mlvBridge.importIntoMediaPool(assets);
+    const imported = await window.mlvBridge.importIntoMediaPool(assets);
+    imported.clipInfos.forEach((item) => {
+      const range = item.StartIndex !== undefined ? ` [${item.StartIndex}-${item.EndIndex}]` : "";
+      writeLog(`Resolve import: ${item.FilePath}${range}`);
+    });
     writeLog(`Imported ${imported.count} item(s).`);
   } catch (error) {
     writeLog(error.stack || error.message);
@@ -88,4 +113,10 @@ runButton.addEventListener("click", async () => {
   }
 });
 
-renderQueue();
+window.addEventListener("beforeunload", () => {
+  window.mlvBridge.cleanupResolve();
+});
+
+loadDefaults()
+  .catch((error) => writeLog(error.stack || error.message))
+  .finally(renderQueue);
